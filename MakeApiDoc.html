@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Make API Docs</title>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.js"></script>
+        
+        <style>
+            .marginLeft {
+                margin-left: 20px;
+            }
+        </style>
+    </head>
+
+
+    <body ng-app="makeApiDoc">
+        <form id="form" ng-controller="makeApiDocCtrl">
+
+            <h2>General info</h2>
+            
+            <table class="marginLeft">
+                <tr>
+                    <td>API's Name</td>
+                    <td>
+                        <input type="text" id="apiName" required ng-model="apiName"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Method</td>
+                    <td>
+                        <select id="method" ng-model="method">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>API Path</td>
+                    <td>
+                        <input type="text" id="apiPath" required ng-model="apiPath"/>
+                    </td>
+                </tr>
+            </table>
+    
+    
+            <h2>Parameters</h2>
+    
+            <table ng-show="method != 'POST'" class="marginLeft">
+                <tr>
+                    <td>Parameter name</td>
+                    <td>Parameter value</td>
+                    <td>Parameter's description</td>
+                </tr>
+
+                <tr data-ng-repeat="parameter in parameters">
+                    <td>
+                        <input type="text" placeholder="Name" ng-model="parameter.name"/>
+                    </td>
+                    <td>
+                        <input type="text" placeholder="Value" ng-model="parameter.value"/>
+                    </td>
+
+                    <td>
+                        <input type="text" placeholder="Description" ng-model="parameter.description" />
+                    </td>
+
+                    <td>
+                        <label>
+                            <input type="checkbox" ng-model="parameter.isMandory"/>
+                            Is mandory?
+                        </label>
+                    </td>
+
+                    <td ng-show="$last">
+                        <button ng-click="addNewParameter()">Add a new parameter</button>
+                    </td>
+                </tr>
+            </table>
+
+            <table ng-show="method == 'POST'" class="marginLeft">
+                <tr>
+                    <td>
+                        <textarea placeholder="Parameters body" rows="5" cols="50" ng-model="parameterBody"></textarea>
+                    </td>
+                </tr>
+            </table>
+    
+    
+            <h2>Responses</h2>
+    
+            <fieldset data-ng-repeat="response in responses" class="marginLeft">
+                <table>
+                    <tr>
+                        <td>Description</td>
+                        <td>
+                            <input type="text" placeholder="A short description" ng-model="response.description"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Response code</td>
+                        <td>
+                            <select ng-model="response.responseCode">
+                                <option value="200">200 - OK</option>
+                                <option value="201">201 - Created</option>
+                                <option value="204">204 - No content</option>
+                                <option value="304">304 - Not modified</option>
+                                <option value="400">400 - Bad request</option>
+                                <option value="401">401 - Unauthorized</option>
+                                <option value="403">403 - Forbidden</option>
+                                <option value="404">404 - Not found</option>
+                                <option value="409">409 - Conflict</option>
+                                <option value="500">500 - Internal server error</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td>Response body</td>
+                        <td>
+                            <textarea placeholder="Response body" rows="5" cols="50" ng-model="response.responseBody"></textarea>
+                        </td>
+                    </tr>
+                </table>
+
+
+                <button ng-show="$last" ng-click="addNewResponse()">Add a new response</button>
+            </fieldset>
+            
+    
+        
+
+            <br><br>
+            <button ng-click="save()">Save</button>
+        </form>
+
+
+        <script type="text/javascript">
+            var app = angular.module("makeApiDoc", []);
+
+            app.controller("makeApiDocCtrl", function ($scope) {
+
+                $scope.method = "GET";
+                $scope.parameters = [
+                    {}
+                ];
+                $scope.responses = [
+                    {
+                        responseCode: "200"
+                    }
+                ];
+
+                $scope.save = function () {
+                    /*console.log($scope.apiName, $scope.method, $scope.apiPath);
+                    console.log($scope.parameters);
+                    console.log($scope.responses);*/
+
+                    var textToSave = $scope.assembleText();
+
+                    $scope.downloadFile($scope.apiName + ".md", textToSave);
+
+                    return false;
+                }
+
+
+                $scope.addNewParameter = function () {
+                    this.parameters.push({});
+                }
+
+                $scope.addNewResponse = function () {
+                    this.responses.push(
+                        {
+                            responseCode: "200"
+                        }
+                    );
+                }
+
+
+                // This method will create the string that has to be written to the file
+                $scope.assembleText = function () {
+                    var toRet = "";
+
+                    toRet += "# " + $scope.apiName + "\n\n";
+                    toRet += "Methods: **" + $scope.method + "** \n";
+                    toRet += "Path: **" + $scope.apiPath + "** \n\n";
+
+                    toRet += " - [Parameters](#Parameters)\n";
+                    toRet += " - [Responses](#Responses)\n";
+                    // Build the summary of responses
+                    for (var i = 0; i < $scope.responses.length; i++) {
+                        var resp = $scope.responses[i];
+
+                        toRet += "    - [" + resp.description + " (" + resp.responseCode + ")](#" + resp.description.replace(/ /g, "-") + "-(" + resp.responseCode + "))\n";
+                    }
+                    toRet += "\n\n<br />\n\n";
+
+                    toRet += "## Parameters \n";
+                    
+                    // Check if the method is POST
+                    // If yes add to the string to return the provided body
+                    // Otherwise, build a table with the parameters
+                    if ($scope.method == 'POST'){
+                        toRet += "```json\n";
+                        toRet += $scope.parameterBody;
+                        toRet += "\n```\n";
+                    } else {
+                        toRet += "Name | Value | Description | Mandory \n";
+                        toRet += "--- | --- | --- | --- \n";
+
+                        // Loop all the provided parameters
+                        for (var i = 0; i < $scope.parameters.length; i++) {
+                            var par = $scope.parameters[i];
+                            
+                            var isChecked;
+                            if (par.isMandory){
+                                isChecked = true;
+                            } else {
+                                isChecked = false;
+                            }
+
+                            toRet += par.name + " | "+
+                                par.value + " | " +
+                                par.description + " | " +
+                                isChecked + "\n";
+                        }
+
+                        toRet += "\n";
+                    }
+
+
+                    toRet += "---\n";
+                    toRet += "## Responses\n\n";
+
+                    for (var i = 0; i < $scope.responses.length; i++) {
+                        var resp = $scope.responses[i];
+
+                        toRet += "### " + resp.description + " (" + resp.responseCode + ")\n";
+                        toRet += "```json\n";
+
+                        toRet += resp.responseBody;
+
+                        toRet += "\n```\n\n";
+                    }
+
+
+                    toRet += "<br />";
+
+                    return toRet;
+                }
+
+
+                // This function will create a file and download it
+                $scope.downloadFile = function(filename, text) {
+                    var element = document.createElement('a');
+                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                    element.setAttribute('download', filename);
+
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+
+                    element.click();
+
+                    document.body.removeChild(element);
+                }
+            });
+            
+        </script>
+
+    </body>
+</html>
