@@ -226,7 +226,7 @@
                     // Otherwise, build a table with the parameters
                     if ($scope.method == 'POST'){
                         toRet += "```json\n";
-                        toRet += $scope.parameterBody;
+                        toRet += JSON.stringify(JSON.parse($scope.parameterBody), null, "\t"); // Indented with tab
                         toRet += "\n```\n";
                     } else {
                         toRet += "Name | Value | Description | Mandory \n";
@@ -262,7 +262,8 @@
                         toRet += "### " + resp.description + " (" + resp.responseCode + ")\n";
                         toRet += "```json\n";
 
-                        toRet += resp.responseBody;
+                        //toRet += resp.responseBody;
+                        toRet +=  JSON.stringify(JSON.parse(resp.responseBody), null, "\t"); // Indented with tab
 
                         toRet += "\n```\n\n";
                     }
