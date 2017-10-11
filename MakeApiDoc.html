@@ -115,6 +115,7 @@
                                 <option value="403">403 - Forbidden</option>
                                 <option value="404">404 - Not found</option>
                                 <option value="409">409 - Conflict</option>
+                                <option value="422">422 - Unprocessable entity</option>
                                 <option value="500">500 - Internal server error</option>
                             </select>
                         </td>
@@ -162,9 +163,26 @@
                     console.log($scope.parameters);
                     console.log($scope.responses);*/
 
-                    var textToSave = $scope.assembleText();
+                    if ($scope.method == "POST" && !$scope.isValidJSON($scope.parameterBody)){
+                        alert("Invalid JSON in Parameters field!");
+                    } else {
+                        var invalid = false;
+                        for (var i = 0; i < $scope.responses.length; i++){
+                            if (!$scope.isValidJSON($scope.responses[i].responseBody)){
+                                invalid = true;
+                                alert("Invalid JSON in Response number " + (i+1));
+                                break;
+                            }
+                        }
 
-                    $scope.downloadFile($scope.apiName + ".md", textToSave);
+                        if (!invalid){
+                            var textToSave = $scope.assembleText();
+
+                            $scope.downloadFile($scope.apiName + ".md", textToSave);
+                        }
+                    }
+
+                    
 
                     return false;
                 }
@@ -268,6 +286,16 @@
                     element.click();
 
                     document.body.removeChild(element);
+                }
+
+
+                $scope.isValidJSON = function(str){
+                    try {
+                        JSON.parse(str);
+                    } catch (e) {
+                        return false;
+                    }
+                    return true;
                 }
             });
             
